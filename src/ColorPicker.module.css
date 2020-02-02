@@ -1,0 +1,17 @@
+.colorPicker {
+  display: flex;
+  direction: row;
+  height: 50px;
+  width: 100%;
+}
+
+.colorPicker > div {
+  width: 100px;
+  margin: 3px;
+  border: none;
+}
+
+.colorPicker > div.active {
+  border: 3px solid #fff;
+  margin: 0;
+}
