@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from 'react';
 
 export type Color = [number, number, number, number];
 export type SetPixelFn = (x: number, y: number, colorIndex: number) => void;
@@ -26,39 +26,40 @@ const LimpaCanvas = ({
   scaleX,
   scaleY,
   revision,
-  grid
+  grid,
 }: LimpaCanvasProps) => {
   const canvasEl = useRef(null);
   const sourceCanvasEl = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
-  const drawGrid = (ctx: CanvasRenderingContext2D) => {
-    ctx.beginPath();
-
-    for (let x = 1; x < width; x++) {
-      ctx.moveTo(x * scaleX + 0.5, 0);
-      ctx.lineTo(x * scaleX + 0.5, height * scaleY);
-    }
-
-    for (let y = 1; y < height; y++) {
-      ctx.moveTo(0, y * scaleY + 0.5);
-      ctx.lineTo(width * scaleX, y * scaleY + 0.5);
-    }
-
-    ctx.lineWidth = 1;
-    ctx.setLineDash([1, 1]);
-    ctx.lineDashOffset = 0;
-    ctx.strokeStyle = "#000000";
-    ctx.stroke();
-    ctx.lineDashOffset = 1;
-    ctx.strokeStyle = "#ffffff";
-    ctx.stroke();
-  };
-
   useEffect(() => {
-    console.log("REDRAW!");
+    const drawGrid = (ctx: CanvasRenderingContext2D) => {
+      ctx.beginPath();
+
+      for (let x = 1; x < width; x++) {
+        ctx.moveTo(x * scaleX + 0.5, 0);
+        ctx.lineTo(x * scaleX + 0.5, height * scaleY);
+      }
+
+      for (let y = 1; y < height; y++) {
+        ctx.moveTo(0, y * scaleY + 0.5);
+        ctx.lineTo(width * scaleX, y * scaleY + 0.5);
+      }
+
+      ctx.lineWidth = 1;
+      ctx.setLineDash([1, 1]);
+      ctx.lineDashOffset = 0;
+      ctx.strokeStyle = '#000000';
+      ctx.stroke();
+      ctx.lineDashOffset = 1;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+    };
+
+    console.log('REDRAW!');
+
     const el = (sourceCanvasEl.current as unknown) as HTMLCanvasElement;
-    const ctx = el.getContext("2d");
+    const ctx = el.getContext('2d');
 
     if (!ctx) {
       return;
@@ -83,7 +84,7 @@ const LimpaCanvas = ({
     ctx.putImageData(image, 0, 0);
 
     const el2 = (canvasEl.current as unknown) as HTMLCanvasElement;
-    const ctx2 = el2.getContext("2d");
+    const ctx2 = el2.getContext('2d');
 
     if (!ctx2) {
       return;
@@ -101,7 +102,7 @@ const LimpaCanvas = ({
   }, [pixels, width, height, palette, scaleX, scaleY, revision, grid]);
 
   const handleMouseDown = (
-    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
   ) => {
     ev.stopPropagation();
     const x = Math.floor(ev.nativeEvent.offsetX / scaleX);
@@ -111,7 +112,7 @@ const LimpaCanvas = ({
   };
 
   const handleMouseMove = (
-    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
   ) => {
     ev.stopPropagation();
     if (isDrawing) {
@@ -122,7 +123,7 @@ const LimpaCanvas = ({
   };
 
   const handleMouseUp = (
-    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>
+    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
   ) => {
     ev.stopPropagation();
     setIsDrawing(false);
@@ -134,13 +135,13 @@ const LimpaCanvas = ({
         ref={sourceCanvasEl}
         width={width}
         height={height}
-        style={{ display: "none" }}
+        style={{ display: 'none' }}
       ></canvas>
       <canvas
         ref={canvasEl}
         width={width * scaleX}
         height={height * scaleY}
-        style={{ border: "1px solid white" }}
+        style={{ border: '1px solid white' }}
         onMouseDownCapture={handleMouseDown}
         onMouseUpCapture={handleMouseUp}
         onMouseMove={handleMouseMove}

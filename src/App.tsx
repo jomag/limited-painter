@@ -1,29 +1,17 @@
-import React, { useRef, useState } from "react";
-import ColorPicker from "./ColorPicker";
-import LimpaCanvas from "./LimpaCanvas";
-import "./App.css";
-import * as palettes from "./palettes";
-import nailedIt from "./nailed-it";
-
-const smiley = [
-  "00111100",
-  "01111110",
-  "11211211",
-  "11211211",
-  "11111111",
-  "12111121",
-  "01222210",
-  "00111100"
-]
-  .join("")
-  .split("")
-  .map(n => parseInt(n, 16));
+import React, { useRef, useState } from 'react';
+import ToolBar from './ToolBar';
+import ColorPicker from './ColorPicker';
+import LimpaCanvas from './LimpaCanvas';
+import './App.css';
+import * as palettes from './palettes';
+import nailedIt from './nailed-it';
 
 const App = () => {
   const pixels = useRef(nailedIt);
   const [activeColorIndex, setActiveColorIndex] = useState(0);
-  const [scaleX, setScaleX] = useState(20);
-  const [scaleY, setScaleY] = useState(10);
+  const [zoom, setZoom] = useState(1);
+  const [grid, setGrid] = useState(false);
+  const [pixelAspectRatio, setPixelAspectRatio] = useState(1);
   const [revision, setRevision] = useState(0);
   const [palette] = useState(palettes.c64alt);
   const width = 160;
@@ -31,20 +19,29 @@ const App = () => {
 
   const setPixel = (x: number, y: number, colorIndex: number) => {
     pixels.current[y * width + x] = colorIndex;
-    console.log("setpixel");
+    console.log('setpixel');
     setRevision(revision + 1);
   };
 
   const handleWheel = (evt: React.WheelEvent) => {
     const dir = Math.sign(evt.deltaY);
-    if (dir < 0 || (scaleX > 1 && scaleY > 1)) {
-      setScaleY(scaleY - dir);
-      setScaleX((scaleY - dir) * 2);
+    if (dir < 0 || zoom > 1) {
+      setZoom(zoom - dir);
     }
   };
 
   return (
     <div className="App">
+      <div className="toolBarContainer">
+        <ToolBar
+          zoom={zoom}
+          setZoom={setZoom}
+          grid={grid}
+          setGrid={setGrid}
+          pixelAspectRatio={pixelAspectRatio}
+          setPixelAspectRatio={setPixelAspectRatio}
+        />
+      </div>
       <div className="canvasContainer" onWheel={handleWheel}>
         <LimpaCanvas
           pixels={pixels.current}
@@ -53,9 +50,9 @@ const App = () => {
           palette={palette}
           setPixel={setPixel}
           activeColorIndex={activeColorIndex}
-          scaleX={scaleX}
-          scaleY={scaleY}
-          grid={scaleX > 5 && scaleY > 5}
+          scaleX={zoom * pixelAspectRatio}
+          scaleY={zoom}
+          grid={grid && zoom > 4}
           revision={revision}
         />
       </div>
