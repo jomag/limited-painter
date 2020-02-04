@@ -26,7 +26,7 @@ const App = () => {
   const handleWheel = (evt: React.WheelEvent) => {
     const dir = Math.sign(evt.deltaY);
     if (dir < 0 || zoom > 1) {
-      setZoom(zoom - dir);
+      setZoom(zoom - dir * zoom * 0.1);
     }
   };
 
