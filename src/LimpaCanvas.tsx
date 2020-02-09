@@ -1,12 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
+import ImageProject, { AbsRect } from './Image';
 
 export type Color = [number, number, number, number];
 export type SetPixelFn = (x: number, y: number, colorIndex: number) => void;
 
 type LimpaCanvasProps = {
-  pixels: number[];
-  width: number;
-  height: number;
+  image: ImageProject;
   palette: Color[];
   setPixel: SetPixelFn;
   activeColorIndex: number;
@@ -17,11 +16,8 @@ type LimpaCanvasProps = {
 };
 
 const LimpaCanvas = ({
-  pixels,
-  width,
-  height,
+  image,
   palette,
-  setPixel,
   activeColorIndex,
   scaleX,
   scaleY,
@@ -30,9 +26,58 @@ const LimpaCanvas = ({
 }: LimpaCanvasProps) => {
   const canvasEl = useRef(null);
   const sourceCanvasEl = useRef(null);
+  const img = useRef(image);
   const [isDrawing, setIsDrawing] = useState(false);
 
+  const { width, height } = image;
+
   useEffect(() => {
+    const redrawDirty = ({ x1, y1, x2, y2 }: AbsRect) => {
+      console.log(`REDRAW: (${x1}, ${y1})-(${x2}, ${y2})`);
+
+      const { pixels } = img.current;
+
+      const el = (sourceCanvasEl.current as unknown) as HTMLCanvasElement;
+      const ctx = el.getContext('2d');
+
+      if (!ctx) {
+        return;
+      }
+
+      const image = ctx.createImageData(x2 - x1 + 1, y2 - y1 + 1);
+
+      let o = 0;
+
+      for (let y = y1; y <= y2; y++) {
+        for (let x = x1; x <= x2; x++) {
+          const colorIndex = pixels[y * width + x];
+          const color = palette[colorIndex];
+          image.data[o + 0] = color[0];
+          image.data[o + 1] = color[1];
+          image.data[o + 2] = color[2];
+          image.data[o + 3] = color[3];
+          o += 4;
+        }
+      }
+
+      ctx.putImageData(image, x1, y1);
+
+      const el2 = (canvasEl.current as unknown) as HTMLCanvasElement;
+      const ctx2 = el2.getContext('2d');
+
+      if (!ctx2) {
+        return;
+      }
+
+      ctx2.imageSmoothingEnabled = false;
+      // ctx2.mozImageSmoothingEnabled = false;
+      // ctx2.webkitImageSmoothingEnabled = false;
+      // ctx2.msImageSmoothingEnabled = false;
+      const [x, y, w, h] = [x1, y1, x2 - x1 + 1, y2 - y1 + 1];
+      const [sx, sy] = [scaleX, scaleY];
+      ctx2.drawImage(el, x, y, w, h, x * sx, y * sy, w * sx, h * sy);
+    };
+
     const drawGrid = (ctx: CanvasRenderingContext2D) => {
       ctx.beginPath();
 
@@ -56,50 +101,38 @@ const LimpaCanvas = ({
       ctx.stroke();
     };
 
-    console.log('REDRAW!');
-
-    const el = (sourceCanvasEl.current as unknown) as HTMLCanvasElement;
-    const ctx = el.getContext('2d');
-
-    if (!ctx) {
-      return;
-    }
-
-    const image = ctx.createImageData(width, height);
-
-    let o = 0;
-
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const colorIndex = pixels[y * width + x];
-        const color = palette[colorIndex];
-        image.data[o + 0] = color[0];
-        image.data[o + 1] = color[1];
-        image.data[o + 2] = color[2];
-        image.data[o + 3] = color[3];
-        o += 4;
-      }
-    }
-
-    ctx.putImageData(image, 0, 0);
-
-    const el2 = (canvasEl.current as unknown) as HTMLCanvasElement;
-    const ctx2 = el2.getContext('2d');
-
-    if (!ctx2) {
-      return;
-    }
-
-    ctx2.imageSmoothingEnabled = false;
-    // ctx2.mozImageSmoothingEnabled = false;
-    // ctx2.webkitImageSmoothingEnabled = false;
-    // ctx2.msImageSmoothingEnabled = false;
-    ctx2.drawImage(el, 0, 0, width * scaleX, height * scaleY);
+    redrawDirty({ x1: 0, y1: 0, x2: width - 1, y2: height - 1 });
 
     if (grid) {
+      const el2 = (canvasEl.current as unknown) as HTMLCanvasElement;
+      const ctx2 = el2.getContext('2d');
+
+      if (!ctx2) {
+        return;
+      }
+
       drawGrid(ctx2);
     }
-  }, [pixels, width, height, palette, scaleX, scaleY, revision, grid]);
+
+    img.current.on('dirty', redrawDirty);
+    return () => {
+      img.current.off('dirty', redrawDirty);
+    };
+  }, [image, palette, scaleX, scaleY, revision, grid]);
+
+  const drawBrush = (x: number, y: number) => {
+    const brush = [
+      [0, 0],
+      [0, -1],
+      [-1, 0],
+      [1, 0],
+      [0, 1],
+    ];
+
+    for (const px of brush) {
+      img.current.setPixel(x + px[0], y + px[1], activeColorIndex);
+    }
+  };
 
   const handleMouseDown = (
     ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
@@ -107,7 +140,7 @@ const LimpaCanvas = ({
     ev.stopPropagation();
     const x = Math.floor(ev.nativeEvent.offsetX / scaleX);
     const y = Math.floor(ev.nativeEvent.offsetY / scaleY);
-    setPixel(x, y, activeColorIndex);
+    drawBrush(x, y);
     setIsDrawing(true);
   };
 
@@ -118,7 +151,7 @@ const LimpaCanvas = ({
     if (isDrawing) {
       const x = Math.floor(ev.nativeEvent.offsetX / scaleX);
       const y = Math.floor(ev.nativeEvent.offsetY / scaleY);
-      setPixel(x, y, activeColorIndex);
+      drawBrush(x, y);
     }
   };
 

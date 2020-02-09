@@ -1,13 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import ToolBar from './ToolBar';
 import ColorPicker from './ColorPicker';
 import LimpaCanvas from './LimpaCanvas';
 import './App.css';
 import * as palettes from './palettes';
 import nailedIt from './nailed-it';
+import ImageProject from './Image';
 
 const App = () => {
-  const pixels = useRef(nailedIt);
+  const image = useRef<ImageProject>();
   const [activeColorIndex, setActiveColorIndex] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [grid, setGrid] = useState(false);
@@ -17,8 +18,14 @@ const App = () => {
   const width = 160;
   const height = 200;
 
+  useEffect(() => {
+    image.current = ImageProject.createFromArray(160, 200, nailedIt);
+  }, []);
+
   const setPixel = (x: number, y: number, colorIndex: number) => {
-    pixels.current[y * width + x] = colorIndex;
+    if (image.current !== undefined) {
+      image.current.pixels[y * width + x] = colorIndex;
+    }
     console.log('setpixel');
     setRevision(revision + 1);
   };
@@ -43,18 +50,18 @@ const App = () => {
         />
       </div>
       <div className="canvasContainer" onWheel={handleWheel}>
-        <LimpaCanvas
-          pixels={pixels.current}
-          width={width}
-          height={height}
-          palette={palette}
-          setPixel={setPixel}
-          activeColorIndex={activeColorIndex}
-          scaleX={zoom * pixelAspectRatio}
-          scaleY={zoom}
-          grid={grid && zoom > 4}
-          revision={revision}
-        />
+        {image.current && (
+          <LimpaCanvas
+            image={image.current}
+            palette={palette}
+            setPixel={setPixel}
+            activeColorIndex={activeColorIndex}
+            scaleX={zoom * pixelAspectRatio}
+            scaleY={zoom}
+            grid={grid && zoom > 4}
+            revision={revision}
+          />
+        )}
       </div>
       <div className="colorPickerContainer">
         <ColorPicker
