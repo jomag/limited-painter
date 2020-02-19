@@ -1,0 +1,15 @@
+.root {
+  width: 100%;
+  height: 100%;
+  color: var(--default-text-color);
+  background-color: var(--dark-grey);
+
+  display: flex;
+}
+
+.sidebar {
+  width: 300px;
+  background-color: var(--dark-grey2);
+  border-right: 1px solid var(--border-color);
+  padding: 10px;
+}
