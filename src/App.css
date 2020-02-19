@@ -10,11 +10,13 @@ body,
   flex-direction: column;
   background: #222;
   height: 100%;
+  overflow: hidden;
 }
 
 .canvasContainer {
   flex-grow: 1;
   overflow: hidden;
+  padding: 10px;
 }
 
 .colorPickerContainer {

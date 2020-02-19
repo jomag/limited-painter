@@ -1,77 +1,54 @@
-import React, { useRef, useState, useEffect } from 'react';
-import ToolBar from './ToolBar';
-import ColorPicker from './ColorPicker';
-import LimpaCanvas from './LimpaCanvas';
-import './App.css';
-import * as palettes from './palettes';
-import nailedIt from './nailed-it';
+import React, { useEffect, useReducer, useState } from 'react';
 import ImageProject from './Image';
+import WelcomeScene from './scenes/welcome';
+import MainScene from './scenes/main';
+import { prepareLocalStorage, saveImage, loadImage } from './storage';
+
+import nailedIt from './nailed-it';
+import './App.css';
+import './variables.css';
 
 const App = () => {
-  const image = useRef<ImageProject>();
-  const [activeColorIndex, setActiveColorIndex] = useState(0);
-  const [zoom, setZoom] = useState(1);
-  const [grid, setGrid] = useState(false);
-  const [pixelAspectRatio, setPixelAspectRatio] = useState(1);
-  const [revision, setRevision] = useState(0);
-  const [palette] = useState(palettes.c64alt);
-  const width = 160;
-  const height = 200;
+  // Force rerender when local storage is updated
+  // eslint-disable-next-line
+  const [localStorageUpdates, localStorageUpdate] = useReducer(x => x + 1, 0);
+  const [image, setImage] = useState<ImageProject>();
+  const [imageUri, setImageUri] = useState<string>();
 
   useEffect(() => {
-    image.current = ImageProject.createFromArray(160, 200, nailedIt);
+    if (prepareLocalStorage()) {
+      const example1 = ImageProject.createFromArray(160, 200, nailedIt);
+      saveImage(example1, 'local:example-nailed-it').then(() =>
+        localStorageUpdate(),
+      );
+
+      saveImage(example1, 'local:example-nailed-it-again').then(() =>
+        localStorageUpdate(),
+      );
+
+      saveImage(example1, 'local:example-nailed-it-finally').then(() =>
+        localStorageUpdate(),
+      );
+    }
   }, []);
 
-  const setPixel = (x: number, y: number, colorIndex: number) => {
-    if (image.current !== undefined) {
-      image.current.pixels[y * width + x] = colorIndex;
-    }
-    console.log('setpixel');
-    setRevision(revision + 1);
+  const open = (uri: string) => {
+    const img = loadImage(uri);
+    setImage(img);
+    setImageUri(uri);
   };
 
-  const handleWheel = (evt: React.WheelEvent) => {
-    const dir = Math.sign(evt.deltaY);
-    if (dir < 0 || zoom > 1) {
-      setZoom(zoom - dir * zoom * 0.1);
-    }
-  };
-
-  return (
-    <div className="App">
-      <div className="toolBarContainer">
-        <ToolBar
-          zoom={zoom}
-          setZoom={setZoom}
-          grid={grid}
-          setGrid={setGrid}
-          pixelAspectRatio={pixelAspectRatio}
-          setPixelAspectRatio={setPixelAspectRatio}
-        />
-      </div>
-      <div className="canvasContainer" onWheel={handleWheel}>
-        {image.current && (
-          <LimpaCanvas
-            image={image.current}
-            palette={palette}
-            setPixel={setPixel}
-            activeColorIndex={activeColorIndex}
-            scaleX={zoom * pixelAspectRatio}
-            scaleY={zoom}
-            grid={grid && zoom > 4}
-            revision={revision}
-          />
-        )}
-      </div>
-      <div className="colorPickerContainer">
-        <ColorPicker
-          palette={palette}
-          active={activeColorIndex}
-          setActive={setActiveColorIndex}
-        />
-      </div>
-    </div>
-  );
+  if (image && imageUri) {
+    return (
+      <MainScene
+        uri={imageUri}
+        image={image}
+        close={() => setImage(undefined)}
+      />
+    );
+  } else {
+    return <WelcomeScene open={open} />;
+  }
 };
 
 export default App;

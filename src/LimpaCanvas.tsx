@@ -1,126 +1,103 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { Component } from 'react';
 import ImageProject, { AbsRect } from './Image';
+import { Tool } from './tools';
 
 export type Color = [number, number, number, number];
-export type SetPixelFn = (x: number, y: number, colorIndex: number) => void;
+
+const clamp = (value: number, min: number, max: number) =>
+  value < min ? min : value > max ? max : value;
 
 type LimpaCanvasProps = {
   image: ImageProject;
-  palette: Color[];
-  setPixel: SetPixelFn;
-  activeColorIndex: number;
   scaleX: number;
   scaleY: number;
-  revision: number;
   grid: boolean;
+  tool: Tool;
 };
 
-const LimpaCanvas = ({
-  image,
-  palette,
-  activeColorIndex,
-  scaleX,
-  scaleY,
-  revision,
-  grid,
-}: LimpaCanvasProps) => {
-  const canvasEl = useRef(null);
-  const sourceCanvasEl = useRef(null);
-  const img = useRef(image);
-  const [isDrawing, setIsDrawing] = useState(false);
+class LimpaCanvas extends Component<LimpaCanvasProps> {
+  image?: ImageProject;
+  sourceRef: React.RefObject<HTMLCanvasElement>;
+  canvasRef: React.RefObject<HTMLCanvasElement>;
 
-  const { width, height } = image;
+  constructor(props: LimpaCanvasProps) {
+    super(props);
 
-  useEffect(() => {
-    const redrawDirty = ({ x1, y1, x2, y2 }: AbsRect) => {
-      console.log(`REDRAW: (${x1}, ${y1})-(${x2}, ${y2})`);
+    this.sourceRef = React.createRef<HTMLCanvasElement>();
+    this.canvasRef = React.createRef<HTMLCanvasElement>();
 
-      const { pixels } = img.current;
+    this.handleDirty = this.handleDirty.bind(this);
+    this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleMouseUp = this.handleMouseUp.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
 
-      const el = (sourceCanvasEl.current as unknown) as HTMLCanvasElement;
-      const ctx = el.getContext('2d');
+    this.image = props.image;
+    this.image.on('dirty', this.handleDirty);
+  }
 
-      if (!ctx) {
-        return;
-      }
+  componentDidMount() {
+    if (this.image) {
+      this.renderDirty({
+        x1: 0,
+        y1: 0,
+        x2: this.image.width - 1,
+        y2: this.image.height - 1,
+      });
+    }
+  }
 
-      const image = ctx.createImageData(x2 - x1 + 1, y2 - y1 + 1);
-
-      let o = 0;
-
-      for (let y = y1; y <= y2; y++) {
-        for (let x = x1; x <= x2; x++) {
-          const colorIndex = pixels[y * width + x];
-          const color = palette[colorIndex];
-          image.data[o + 0] = color[0];
-          image.data[o + 1] = color[1];
-          image.data[o + 2] = color[2];
-          image.data[o + 3] = color[3];
-          o += 4;
-        }
-      }
-
-      ctx.putImageData(image, x1, y1);
-
-      const el2 = (canvasEl.current as unknown) as HTMLCanvasElement;
-      const ctx2 = el2.getContext('2d');
-
-      if (!ctx2) {
-        return;
-      }
-
-      ctx2.imageSmoothingEnabled = false;
-      // ctx2.mozImageSmoothingEnabled = false;
-      // ctx2.webkitImageSmoothingEnabled = false;
-      // ctx2.msImageSmoothingEnabled = false;
-      const [x, y, w, h] = [x1, y1, x2 - x1 + 1, y2 - y1 + 1];
-      const [sx, sy] = [scaleX, scaleY];
-      ctx2.drawImage(el, x, y, w, h, x * sx, y * sy, w * sx, h * sy);
-    };
-
-    const drawGrid = (ctx: CanvasRenderingContext2D) => {
-      ctx.beginPath();
-
-      for (let x = 1; x < width; x++) {
-        ctx.moveTo(x * scaleX + 0.5, 0);
-        ctx.lineTo(x * scaleX + 0.5, height * scaleY);
-      }
-
-      for (let y = 1; y < height; y++) {
-        ctx.moveTo(0, y * scaleY + 0.5);
-        ctx.lineTo(width * scaleX, y * scaleY + 0.5);
-      }
-
-      ctx.lineWidth = 1;
-      ctx.setLineDash([1, 1]);
-      ctx.lineDashOffset = 0;
-      ctx.strokeStyle = '#000000';
-      ctx.stroke();
-      ctx.lineDashOffset = 1;
-      ctx.strokeStyle = '#ffffff';
-      ctx.stroke();
-    };
-
-    redrawDirty({ x1: 0, y1: 0, x2: width - 1, y2: height - 1 });
-
-    if (grid) {
-      const el2 = (canvasEl.current as unknown) as HTMLCanvasElement;
-      const ctx2 = el2.getContext('2d');
-
-      if (!ctx2) {
-        return;
-      }
-
-      drawGrid(ctx2);
+  componentDidUpdate(prevProps: LimpaCanvasProps) {
+    if (prevProps.image !== this.image) {
+      this.image?.off('dirty', this.handleDirty);
+      this.image = this.props.image;
+      this.image.on('dirty', this.handleDirty);
     }
 
-    img.current.on('dirty', redrawDirty);
-    return () => {
-      img.current.off('dirty', redrawDirty);
-    };
-  }, [image, palette, scaleX, scaleY, revision, grid]);
+    this.renderDirty({
+      x1: 0,
+      y1: 0,
+      x2: this.image.width - 1,
+      y2: this.image.height - 1,
+    });
+  }
 
-  const drawBrush = (x: number, y: number) => {
+  componentWillUnmount() {
+    this.image?.off('dirty', this.handleDirty);
+  }
+
+  handleMouseDown(evt: React.MouseEvent) {
+    if (this.image) {
+      const x = Math.floor(evt.nativeEvent.offsetX / this.props.scaleX);
+      const y = Math.floor(evt.nativeEvent.offsetY / this.props.scaleY);
+      this.props.tool?.handleMouseDown(evt, x, y, this.image);
+    }
+  }
+
+  handleMouseUp(evt: React.MouseEvent) {
+    if (this.image) {
+      const x = Math.floor(evt.nativeEvent.offsetX / this.props.scaleX);
+      const y = Math.floor(evt.nativeEvent.offsetY / this.props.scaleY);
+      this.props.tool?.handleMouseUp(evt, x, y, this.image);
+    }
+  }
+
+  handleMouseMove(evt: React.MouseEvent) {
+    if (this.image) {
+      const x = Math.floor(evt.nativeEvent.offsetX / this.props.scaleX);
+      const y = Math.floor(evt.nativeEvent.offsetY / this.props.scaleY);
+      this.props.tool?.handleMouseMove(evt, x, y, this.image);
+    }
+  }
+
+  handleDirty(area: AbsRect) {
+    this.renderDirty(area);
+  }
+
+  drawBrush = (x: number, y: number) => {
+    if (!this.image) {
+      return;
+    }
+
     const brush = [
       [0, 0],
       [0, -1],
@@ -130,57 +107,121 @@ const LimpaCanvas = ({
     ];
 
     for (const px of brush) {
-      img.current.setPixel(x + px[0], y + px[1], activeColorIndex);
+      this.image.setPixel(x + px[0], y + px[1], 1);
     }
   };
 
-  const handleMouseDown = (
-    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
-  ) => {
-    ev.stopPropagation();
-    const x = Math.floor(ev.nativeEvent.offsetX / scaleX);
-    const y = Math.floor(ev.nativeEvent.offsetY / scaleY);
-    drawBrush(x, y);
-    setIsDrawing(true);
-  };
+  renderDirty({ x1, y1, x2, y2 }: AbsRect) {
+    // console.log(`REDRAW: (${x1}, ${y1})-(${x2}, ${y2})`);
 
-  const handleMouseMove = (
-    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
-  ) => {
-    ev.stopPropagation();
-    if (isDrawing) {
-      const x = Math.floor(ev.nativeEvent.offsetX / scaleX);
-      const y = Math.floor(ev.nativeEvent.offsetY / scaleY);
-      drawBrush(x, y);
+    if (!this.image) {
+      return;
     }
-  };
 
-  const handleMouseUp = (
-    ev: React.MouseEvent<HTMLCanvasElement, MouseEvent>,
-  ) => {
-    ev.stopPropagation();
-    setIsDrawing(false);
-  };
+    const { pixels, width, height } = this.image;
 
-  return (
-    <>
-      <canvas
-        ref={sourceCanvasEl}
-        width={width}
-        height={height}
-        style={{ display: 'none' }}
-      ></canvas>
-      <canvas
-        ref={canvasEl}
-        width={width * scaleX}
-        height={height * scaleY}
-        style={{ border: '1px solid white' }}
-        onMouseDownCapture={handleMouseDown}
-        onMouseUpCapture={handleMouseUp}
-        onMouseMove={handleMouseMove}
-      ></canvas>
-    </>
-  );
-};
+    let dirtyX = clamp(x1, 0, width);
+    let dirtyY = clamp(y1, 0, height);
+    let dirtyWidth = clamp(x2, 0, width) - x1 + 1;
+    let dirtyHeight = clamp(y2, 0, height) - y1 + 1;
+
+    const el = (this.sourceRef.current as unknown) as HTMLCanvasElement;
+
+    const ctx = el.getContext('2d');
+
+    if (!ctx) {
+      return;
+    }
+
+    const imageData = ctx.createImageData(dirtyWidth, dirtyHeight);
+
+    let o = 0;
+
+    for (let y = dirtyY; y < dirtyY + dirtyHeight; y++) {
+      for (let x = dirtyX; x < dirtyX + dirtyWidth; x++) {
+        const colorIndex = pixels[y * width + x];
+        const color = this.image.palette[colorIndex];
+        imageData.data[o + 0] = color[0];
+        imageData.data[o + 1] = color[1];
+        imageData.data[o + 2] = color[2];
+        imageData.data[o + 3] = color[3];
+        o += 4;
+      }
+    }
+
+    ctx.putImageData(imageData, dirtyX, dirtyY);
+
+    const el2 = (this.canvasRef.current as unknown) as HTMLCanvasElement;
+    const ctx2 = el2.getContext('2d');
+
+    if (!ctx2) {
+      return;
+    }
+
+    ctx2.imageSmoothingEnabled = false;
+    // ctx2.mozImageSmoothingEnabled = false;
+    // ctx2.webkitImageSmoothingEnabled = false;
+    // ctx2.msImageSmoothingEnabled = false;
+
+    const [x, y, w, h] = [dirtyX, dirtyY, dirtyWidth, dirtyHeight];
+    const [sx, sy] = [this.props.scaleX, this.props.scaleY];
+    ctx2.drawImage(el, x, y, w, h, x * sx, y * sy, w * sx, h * sy);
+  }
+
+  renderGrid(ctx: CanvasRenderingContext2D) {
+    if (!this.image) {
+      return;
+    }
+
+    const { width, height } = this.image;
+    const { scaleX, scaleY } = this.props;
+
+    ctx.beginPath();
+
+    for (let x = 1; x < width; x++) {
+      ctx.moveTo(x * scaleX + 0.5, 0);
+      ctx.lineTo(x * scaleX + 0.5, height * scaleY);
+    }
+
+    for (let y = 1; y < height; y++) {
+      ctx.moveTo(0, y * scaleY + 0.5);
+      ctx.lineTo(width * scaleX, y * scaleY + 0.5);
+    }
+
+    ctx.lineWidth = 1;
+    ctx.setLineDash([1, 1]);
+    ctx.lineDashOffset = 0;
+    ctx.strokeStyle = '#000000';
+    ctx.stroke();
+    ctx.lineDashOffset = 1;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+  }
+
+  render() {
+    const { width, height } = this.image || { width: 0, height: 0 };
+    const { scaleX, scaleY } = this.props;
+
+    return (
+      <>
+        <canvas
+          ref={this.sourceRef}
+          width={width}
+          height={height}
+          style={{ display: 'none' }}
+        ></canvas>
+        <canvas
+          ref={this.canvasRef}
+          width={width * scaleX}
+          height={height * scaleY}
+          style={{ border: '1px solid white' }}
+          onMouseDownCapture={this.handleMouseDown}
+          onMouseUpCapture={this.handleMouseUp}
+          onMouseMove={this.handleMouseMove}
+        ></canvas>
+      </>
+    );
+  }
+}
 
 export default LimpaCanvas;

@@ -1,0 +1,11 @@
+:root {
+  --black: #000;
+  --white: #fff;
+  --dark-grey: #2c2c2c;
+  --dark-grey2: #3d3d3d;
+  --light-grey: #c2c2c2;
+
+  --accent-color: #00f;
+  --border-color: var(--light-grey);
+  --default-text-color: var(--white);
+}

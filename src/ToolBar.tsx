@@ -11,6 +11,8 @@ type Props = {
   setGrid: (visible: boolean) => void;
   pixelAspectRatio: number;
   setPixelAspectRatio: (ratio: number) => void;
+  close: any; // FIXME: correct type
+  save: any; //FIXME: correct type
 };
 
 type ToolBarButtonProps = {
@@ -36,10 +38,13 @@ const ToolBarButton = ({ active, onClick, children }: ToolBarButtonProps) => {
 const ToolBar = (props: Props) => {
   const nextAspect = props.pixelAspectRatio === 1 ? 2 : 1;
 
-  const { zoom, setZoom, grid, setGrid } = props;
+  const { zoom, setZoom, grid, setGrid, close, save } = props;
 
   return (
     <div className={styles.toolBar}>
+      <ToolBarButton onClick={close}>Close</ToolBarButton>
+      <ToolBarButton onClick={save}>Save</ToolBarButton>
+
       <ToolBarButton active={zoom === 1} onClick={() => setZoom(1)}>
         1:1
       </ToolBarButton>
