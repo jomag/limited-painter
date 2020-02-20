@@ -7,6 +7,7 @@ import LimpaCanvas from '../../LimpaCanvas';
 import ImageProject from '../../Image';
 import { Tool } from '../../tools';
 import PenTool from '../../tools/PenTool';
+import LineTool from '../../tools/LineTool';
 import { saveImage } from '../../storage';
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
 };
 
 const MainScene = ({ image, close, uri }: Props) => {
-  const [activeColorIndex, setActiveColorIndex] = useState(0);
+  const [activeColorIndex, _setActiveColorIndex] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [grid, setGrid] = useState(false);
   const [pixelAspectRatio, setPixelAspectRatio] = useState(1);
@@ -24,8 +25,16 @@ const MainScene = ({ image, close, uri }: Props) => {
     new PenTool(1),
     new PenTool(2),
     new PenTool(3),
+    new LineTool(),
   ]);
   const [activeTool, setActiveTool] = useState(tools[0]);
+
+  const setActiveColorIndex = (index: number) => {
+    for (const tool of tools) {
+      tool.setForeground(index);
+    }
+    _setActiveColorIndex(index);
+  };
 
   const handleWheel = (evt: React.WheelEvent) => {
     const dir = Math.sign(evt.deltaY);

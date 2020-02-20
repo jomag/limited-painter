@@ -3,11 +3,13 @@ import { Tool } from './';
 
 export class PenTool extends Tool {
   penSize: number;
+  state: boolean;
 
   constructor(penSize: number) {
     super();
     this.name = `Pen ${penSize}`;
     this.penSize = penSize;
+    this.state = false;
   }
 
   handleMouseDown(
@@ -17,6 +19,8 @@ export class PenTool extends Tool {
     img: ImageProject,
   ) {
     console.log('mouse down...');
+    this.state = true;
+    this.draw(x, y, img);
   }
 
   handleMouseUp(
@@ -26,6 +30,7 @@ export class PenTool extends Tool {
     img: ImageProject,
   ) {
     console.log('mouse up...');
+    this.state = false;
   }
 
   handleMouseMove(
@@ -35,13 +40,20 @@ export class PenTool extends Tool {
     img: ImageProject,
   ) {
     console.log('mouse move...');
+    if (this.state) {
+      this.draw(x, y, img);
+    }
+  }
+
+  draw(x: number, y: number, img: ImageProject) {
+    const idx = this.foregroundColorIndex;
     if (this.penSize === 2) {
-      img?.setPixel(x - 1, y - 1, 0);
-      img?.setPixel(x, y - 1, 0);
-      img?.setPixel(x - 1, y, 0);
-      img?.setPixel(x, y, 0);
+      img?.setPixel(x - 1, y - 1, idx);
+      img?.setPixel(x, y - 1, idx);
+      img?.setPixel(x - 1, y, idx);
+      img?.setPixel(x, y, idx);
     } else {
-      img?.setPixel(x, y, 0);
+      img?.setPixel(x, y, idx);
     }
   }
 }

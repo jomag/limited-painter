@@ -2,9 +2,15 @@ import ImageProject from '../Image';
 
 export class Tool {
   name: string;
+  foregroundColorIndex: number;
 
   constructor() {
     this.name = 'Base Tool';
+    this.foregroundColorIndex = 0;
+  }
+
+  setForeground(index: number) {
+    this.foregroundColorIndex = index;
   }
 
   handleMouseDown(
@@ -32,6 +38,5 @@ export class Tool {
     img: ImageProject,
   ) {
     console.log('mouse move...');
-    img?.setPixel(x, y, 0);
   }
 }
