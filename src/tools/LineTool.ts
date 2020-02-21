@@ -65,15 +65,16 @@ export class LineTool extends Tool {
   ) {
     const dx = x2 - x1;
     let dy = y2 - y1;
-
-    // Draw along X
-    let D = 2 * dy - dx;
     let yi = 1;
-    if (y1 > y2) {
+
+    if (dy < 0) {
       yi = -1;
       dy = -dy;
     }
+
+    let D = 2 * dy - dx;
     let y = y1;
+
     for (let x = x1; x <= x2; x++) {
       toolLayer.setPixel(x, y, this.foregroundColorIndex);
       if (D > 0) {
@@ -94,14 +95,16 @@ export class LineTool extends Tool {
   ) {
     let dx = x2 - x1;
     const dy = y2 - y1;
-
-    let D = 2 * dx - dy;
     let xi = 1;
-    if (x1 > x2) {
+
+    if (dx < 0) {
       xi = -1;
       dx = -dx;
     }
+
+    let D = 2 * dx - dy;
     let x = x1;
+
     for (let y = y1; y <= y2; y++) {
       toolLayer.setPixel(x, y, this.foregroundColorIndex);
       if (D > 0) {
