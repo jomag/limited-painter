@@ -9,7 +9,7 @@ import { Tool } from '../../tools';
 import PenTool from '../../tools/PenTool';
 import LineTool from '../../tools/LineTool';
 import { saveImage } from '../../storage';
-import Layer from '../../Layer';
+import { RectangleTool } from '../../tools/RectangleTool';
 
 type Props = {
   image: ImageProject;
@@ -27,6 +27,7 @@ const MainScene = ({ image, close, uri }: Props) => {
     new PenTool(2),
     new PenTool(3),
     new LineTool(),
+    new RectangleTool(),
   ]);
   const [activeTool, setActiveTool] = useState(tools[0]);
 

@@ -45,6 +45,19 @@ class Layer extends EventEmitter {
     }
   }
 
+  addUsedArea(area: AbsRect) {
+    if (this.usedRect) {
+      this.usedRect = {
+        x1: Math.min(this.usedRect.x1, area.x1),
+        y1: Math.min(this.usedRect.y1, area.y1),
+        x2: Math.max(this.usedRect.x2, area.x2),
+        y2: Math.max(this.usedRect.y2, area.y2),
+      };
+    } else {
+      this.usedRect = area;
+    }
+  }
+
   clear() {
     if (this.usedRect) {
       this.addDirtyArea(this.usedRect);
@@ -60,6 +73,19 @@ class Layer extends EventEmitter {
     }
 
     throw new Error(`(${x}, ${y}) is out of range`);
+  }
+
+  drawRectangle(x1: number, y1: number, w: number, h: number, color: number) {
+    for (let y = y1; y < y1 + h; y++) {
+      for (let x = x1; x < x1 + w; x++) {
+        const n = y * this.width + x;
+        this.pixels[n] = color;
+      }
+    }
+
+    const area = { x1, y1, x2: x1 + w, y2: y1 + h };
+    this.addUsedArea(area);
+    this.addDirtyArea(area);
   }
 
   setPixel(x: number, y: number, color: number) {
