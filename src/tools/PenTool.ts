@@ -1,5 +1,6 @@
 import ImageProject from '../Image';
 import { Tool } from './';
+import Layer from '../Layer';
 
 export class PenTool extends Tool {
   penSize: number;
@@ -17,10 +18,11 @@ export class PenTool extends Tool {
     x: number,
     y: number,
     img: ImageProject,
+    toolLayer: Layer,
   ) {
     console.log('mouse down...');
     this.state = true;
-    this.draw(x, y, img);
+    this.draw(x, y, toolLayer);
   }
 
   handleMouseUp(
@@ -28,9 +30,12 @@ export class PenTool extends Tool {
     x: number,
     y: number,
     img: ImageProject,
+    preview: Layer,
   ) {
-    console.log('mouse up...');
-    this.state = false;
+    if (this.state) {
+      this.apply(img, preview);
+      this.state = false;
+    }
   }
 
   handleMouseMove(
@@ -38,22 +43,27 @@ export class PenTool extends Tool {
     x: number,
     y: number,
     img: ImageProject,
+    preview: Layer,
   ) {
     console.log('mouse move...');
-    if (this.state) {
-      this.draw(x, y, img);
+
+    if (!this.state) {
+      // FIXME: only needs to be done when moving from one pixel to another
+      preview.clear();
     }
+
+    this.draw(x, y, preview);
   }
 
-  draw(x: number, y: number, img: ImageProject) {
+  draw(x: number, y: number, preview: Layer) {
     const idx = this.foregroundColorIndex;
     if (this.penSize === 2) {
-      img?.setPixel(x - 1, y - 1, idx);
-      img?.setPixel(x, y - 1, idx);
-      img?.setPixel(x - 1, y, idx);
-      img?.setPixel(x, y, idx);
+      preview.setPixel(x - 1, y - 1, idx);
+      preview.setPixel(x, y - 1, idx);
+      preview.setPixel(x - 1, y, idx);
+      preview.setPixel(x, y, idx);
     } else {
-      img?.setPixel(x, y, idx);
+      preview.setPixel(x, y, idx);
     }
   }
 }

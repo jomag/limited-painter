@@ -1,5 +1,6 @@
 import ImageProject from '../Image';
 import { Tool } from './';
+import Layer from '../Layer';
 
 export class LineTool extends Tool {
   state: boolean;
@@ -19,17 +20,27 @@ export class LineTool extends Tool {
     x: number,
     y: number,
     img: ImageProject,
+    toolLayer: Layer,
   ) {
     if (!this.state) {
       this.startX = x;
       this.startY = y;
       this.state = true;
-      this.draw(this.startX, this.startY, x, y, img);
+      this.draw(this.startX, this.startY, x, y, img, toolLayer);
     }
   }
 
-  handleMouseUp() {
-    this.state = false;
+  handleMouseUp(
+    evt: React.MouseEvent,
+    x: number,
+    y: number,
+    img: ImageProject,
+    preview: Layer,
+  ) {
+    if (this.state) {
+      this.apply(img, preview);
+      this.state = false;
+    }
   }
 
   handleMouseMove(
@@ -37,13 +48,21 @@ export class LineTool extends Tool {
     x: number,
     y: number,
     img: ImageProject,
+    toolLayer: Layer,
   ) {
     if (this.state) {
-      this.draw(this.startX, this.startY, x, y, img);
+      this.draw(this.startX, this.startY, x, y, img, toolLayer);
     }
   }
 
-  drawHorz(x1: number, y1: number, x2: number, y2: number, img: ImageProject) {
+  drawHorz(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    img: ImageProject,
+    toolLayer: Layer,
+  ) {
     const dx = x2 - x1;
     let dy = y2 - y1;
 
@@ -56,7 +75,7 @@ export class LineTool extends Tool {
     }
     let y = y1;
     for (let x = x1; x <= x2; x++) {
-      img?.setPixel(x, y, this.foregroundColorIndex);
+      toolLayer.setPixel(x, y, this.foregroundColorIndex);
       if (D > 0) {
         y += yi;
         D = D - 2 * dx;
@@ -65,7 +84,14 @@ export class LineTool extends Tool {
     }
   }
 
-  drawVert(x1: number, y1: number, x2: number, y2: number, img: ImageProject) {
+  drawVert(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    img: ImageProject,
+    toolLayer: Layer,
+  ) {
     let dx = x2 - x1;
     const dy = y2 - y1;
 
@@ -77,7 +103,7 @@ export class LineTool extends Tool {
     }
     let x = x1;
     for (let y = y1; y <= y2; y++) {
-      img?.setPixel(x, y, this.foregroundColorIndex);
+      toolLayer.setPixel(x, y, this.foregroundColorIndex);
       if (D > 0) {
         x += xi;
         D = D - 2 * dy;
@@ -86,18 +112,26 @@ export class LineTool extends Tool {
     }
   }
 
-  draw(x1: number, y1: number, x2: number, y2: number, img: ImageProject) {
+  draw(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    img: ImageProject,
+    toolLayer: Layer,
+  ) {
+    toolLayer.clear();
     if (Math.abs(x2 - x1) > Math.abs(y2 - y1)) {
       if (x1 > x2) {
-        this.drawHorz(x2, y2, x1, y1, img);
+        this.drawHorz(x2, y2, x1, y1, img, toolLayer);
       } else {
-        this.drawHorz(x1, y1, x2, y2, img);
+        this.drawHorz(x1, y1, x2, y2, img, toolLayer);
       }
     } else {
       if (y1 > y2) {
-        this.drawVert(x2, y2, x1, y1, img);
+        this.drawVert(x2, y2, x1, y1, img, toolLayer);
       } else {
-        this.drawVert(x1, y1, x2, y2, img);
+        this.drawVert(x1, y1, x2, y2, img, toolLayer);
       }
     }
   }

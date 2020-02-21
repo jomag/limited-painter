@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ImageProject, { AbsRect } from './Image';
 import { Tool } from './tools';
+import Layer from './Layer';
 
 export type Color = [number, number, number, number];
 
@@ -17,6 +18,7 @@ type LimpaCanvasProps = {
 
 class LimpaCanvas extends Component<LimpaCanvasProps> {
   image?: ImageProject;
+  toolLayer: Layer;
   sourceRef: React.RefObject<HTMLCanvasElement>;
   canvasRef: React.RefObject<HTMLCanvasElement>;
 
@@ -32,7 +34,11 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
     this.handleMouseMove = this.handleMouseMove.bind(this);
 
     this.image = props.image;
-    this.image.on('dirty', this.handleDirty);
+    this.toolLayer = new Layer(props.image.width, props.image.height);
+
+    // FIXME: need improvements after introducing layers
+    this.image.layers[0].on('dirty', this.handleDirty);
+    this.toolLayer.on('dirty', this.handleDirty);
   }
 
   componentDidMount() {
@@ -65,27 +71,49 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
     this.image?.off('dirty', this.handleDirty);
   }
 
+  getEventPixel(evt: React.MouseEvent) {
+    return [
+      Math.floor(evt.nativeEvent.offsetX / this.props.scaleX),
+      Math.floor(evt.nativeEvent.offsetY / this.props.scaleY),
+    ];
+  }
+
   handleMouseDown(evt: React.MouseEvent) {
     if (this.image) {
-      const x = Math.floor(evt.nativeEvent.offsetX / this.props.scaleX);
-      const y = Math.floor(evt.nativeEvent.offsetY / this.props.scaleY);
-      this.props.tool?.handleMouseDown(evt, x, y, this.image);
+      const px = this.getEventPixel(evt);
+      this.props.tool?.handleMouseDown(
+        evt,
+        px[0],
+        px[1],
+        this.image,
+        this.toolLayer,
+      );
     }
   }
 
   handleMouseUp(evt: React.MouseEvent) {
     if (this.image) {
-      const x = Math.floor(evt.nativeEvent.offsetX / this.props.scaleX);
-      const y = Math.floor(evt.nativeEvent.offsetY / this.props.scaleY);
-      this.props.tool?.handleMouseUp(evt, x, y, this.image);
+      const px = this.getEventPixel(evt);
+      this.props.tool?.handleMouseUp(
+        evt,
+        px[0],
+        px[1],
+        this.image,
+        this.toolLayer,
+      );
     }
   }
 
   handleMouseMove(evt: React.MouseEvent) {
     if (this.image) {
-      const x = Math.floor(evt.nativeEvent.offsetX / this.props.scaleX);
-      const y = Math.floor(evt.nativeEvent.offsetY / this.props.scaleY);
-      this.props.tool?.handleMouseMove(evt, x, y, this.image);
+      const px = this.getEventPixel(evt);
+      this.props.tool?.handleMouseMove(
+        evt,
+        px[0],
+        px[1],
+        this.image,
+        this.toolLayer,
+      );
     }
   }
 
@@ -107,7 +135,8 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
     ];
 
     for (const px of brush) {
-      this.image.setPixel(x + px[0], y + px[1], 1);
+      this.image.layers[0].setPixel(x + px[0], y + px[1], 1);
+      this.toolLayer.setPixel(x + px[0], y + px[1], 1);
     }
   };
 
@@ -118,7 +147,7 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
       return;
     }
 
-    const { pixels, width, height } = this.image;
+    const { width, height } = this.image;
 
     let dirtyX = clamp(x1, 0, width);
     let dirtyY = clamp(y1, 0, height);
@@ -135,17 +164,20 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
 
     const imageData = ctx.createImageData(dirtyWidth, dirtyHeight);
 
-    let o = 0;
-
-    for (let y = dirtyY; y < dirtyY + dirtyHeight; y++) {
-      for (let x = dirtyX; x < dirtyX + dirtyWidth; x++) {
-        const colorIndex = pixels[y * width + x];
-        const color = this.image.palette[colorIndex];
-        imageData.data[o + 0] = color[0];
-        imageData.data[o + 1] = color[1];
-        imageData.data[o + 2] = color[2];
-        imageData.data[o + 3] = color[3];
-        o += 4;
+    for (const layer of [...this.image.layers, this.toolLayer]) {
+      let o = 0;
+      for (let y = dirtyY; y < dirtyY + dirtyHeight; y++) {
+        for (let x = dirtyX; x < dirtyX + dirtyWidth; x++) {
+          const colorIndex = layer.pixels[y * width + x];
+          if (colorIndex >= 0) {
+            const color = this.image.palette[colorIndex];
+            imageData.data[o + 0] = color[0];
+            imageData.data[o + 1] = color[1];
+            imageData.data[o + 2] = color[2];
+            imageData.data[o + 3] = color[3];
+          }
+          o += 4;
+        }
       }
     }
 

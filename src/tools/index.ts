@@ -1,4 +1,5 @@
 import ImageProject from '../Image';
+import Layer from '../Layer';
 
 export class Tool {
   name: string;
@@ -18,6 +19,7 @@ export class Tool {
     x: number,
     y: number,
     img: ImageProject,
+    toolLayer: Layer,
   ) {
     console.log('mouse down...');
   }
@@ -27,6 +29,7 @@ export class Tool {
     x: number,
     y: number,
     img: ImageProject,
+    toolLayer: Layer,
   ) {
     console.log('mouse up...');
   }
@@ -36,7 +39,20 @@ export class Tool {
     x: number,
     y: number,
     img: ImageProject,
+    toolLayer: Layer,
   ) {
     console.log('mouse move...');
+  }
+
+  apply(img: ImageProject, preview: Layer) {
+    if (preview.usedRect) {
+      img.layers[0].copyFrom(
+        preview,
+        preview.usedRect,
+        preview.usedRect.x1,
+        preview.usedRect.y1,
+      );
+      preview.clear();
+    }
   }
 }

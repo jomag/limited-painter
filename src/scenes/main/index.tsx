@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 import ToolBar from '../../ToolBar';
 import ColorPicker from '../../ColorPicker';
@@ -9,6 +9,7 @@ import { Tool } from '../../tools';
 import PenTool from '../../tools/PenTool';
 import LineTool from '../../tools/LineTool';
 import { saveImage } from '../../storage';
+import Layer from '../../Layer';
 
 type Props = {
   image: ImageProject;
