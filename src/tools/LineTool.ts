@@ -1,6 +1,7 @@
 import ImageProject from '../Image';
 import { Tool } from './';
 import Layer from '../Layer';
+import { ToolType } from '.';
 
 export class LineTool extends Tool {
   state: boolean;
@@ -8,8 +9,7 @@ export class LineTool extends Tool {
   startY: number;
 
   constructor() {
-    super();
-    this.name = 'Line';
+    super(ToolType.LINE, 'Line');
     this.startX = 0;
     this.startY = 0;
     this.state = false;

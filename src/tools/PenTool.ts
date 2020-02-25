@@ -1,14 +1,14 @@
 import ImageProject from '../Image';
 import { Tool } from './';
 import Layer from '../Layer';
+import { ToolType } from '.';
 
 export class PenTool extends Tool {
   penSize: number;
   state: boolean;
 
   constructor(penSize: number) {
-    super();
-    this.name = `Pen ${penSize}`;
+    super(ToolType.PEN, `Pen`);
     this.penSize = penSize;
     this.state = false;
   }
@@ -45,8 +45,6 @@ export class PenTool extends Tool {
     img: ImageProject,
     preview: Layer,
   ) {
-    console.log('mouse move...');
-
     if (!this.state) {
       // FIXME: only needs to be done when moving from one pixel to another
       preview.clear();

@@ -1,12 +1,20 @@
 import ImageProject from '../Image';
 import Layer from '../Layer';
 
+export enum ToolType {
+  PEN,
+  LINE,
+  RECTANGLE,
+}
+
 export class Tool {
   name: string;
+  type: ToolType;
   foregroundColorIndex: number;
 
-  constructor() {
-    this.name = 'Base Tool';
+  constructor(type: ToolType, name: string) {
+    this.type = type;
+    this.name = name;
     this.foregroundColorIndex = 0;
   }
 

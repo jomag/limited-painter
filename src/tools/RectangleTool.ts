@@ -1,6 +1,7 @@
 import ImageProject from '../Image';
 import { Tool } from './';
 import Layer from '../Layer';
+import { ToolType } from '.';
 
 export class RectangleTool extends Tool {
   state: boolean;
@@ -8,8 +9,7 @@ export class RectangleTool extends Tool {
   startY: number;
 
   constructor() {
-    super();
-    this.name = 'Rectangle';
+    super(ToolType.RECTANGLE, 'Rectangle');
     this.startX = 0;
     this.startY = 0;
     this.state = false;

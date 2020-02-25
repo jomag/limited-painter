@@ -1,17 +1,25 @@
 .toolPicker {
   display: flex;
-  direction: row;
-  width: 100%;
+  flex-direction: column;
+  flex-grow: none;
   background: #333;
+  image-rendering: pixelated;
 }
 
 .toolPicker > div {
   color: #fff;
-  padding: 4px 16px;
-  border-radius: 8px;
+  image-rendering: pixelated;
 }
 
 .active {
   background: #04e;
   color: #fff;
+}
+
+.iconButton {
+  width: 32px;
+  height: 32px;
+  margin: 1px;
+  background-size: cover;
+  image-rendering: pixelated;
 }

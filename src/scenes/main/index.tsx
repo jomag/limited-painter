@@ -10,6 +10,8 @@ import PenTool from '../../tools/PenTool';
 import LineTool from '../../tools/LineTool';
 import { saveImage } from '../../storage';
 import { RectangleTool } from '../../tools/RectangleTool';
+import styles from './index.module.css';
+import { ToolType } from '../../tools';
 
 type Props = {
   image: ImageProject;
@@ -22,17 +24,15 @@ const MainScene = ({ image, close, uri }: Props) => {
   const [zoom, setZoom] = useState(1);
   const [grid, setGrid] = useState(false);
   const [pixelAspectRatio, setPixelAspectRatio] = useState(1);
-  const [tools] = useState<Tool[]>([
-    new PenTool(1),
-    new PenTool(2),
-    new PenTool(3),
-    new LineTool(),
-    new RectangleTool(),
-  ]);
-  const [activeTool, setActiveTool] = useState(tools[0]);
+  const tools = useRef<{ [type in ToolType]: Tool }>({
+    [ToolType.PEN]: new PenTool(1),
+    [ToolType.LINE]: new LineTool(),
+    [ToolType.RECTANGLE]: new RectangleTool(),
+  });
+  const [activeTool, setActiveTool] = useState<ToolType>(ToolType.PEN);
 
   const setActiveColorIndex = (index: number) => {
-    for (const tool of tools) {
+    for (const tool of Object.values(tools)) {
       tool.setForeground(index);
     }
     _setActiveColorIndex(index);
@@ -51,7 +51,7 @@ const MainScene = ({ image, close, uri }: Props) => {
 
   return (
     <div className="App">
-      <div className="toolBarContainer">
+      <div className={styles.toolBarContainer}>
         <ToolBar
           zoom={zoom}
           setZoom={setZoom}
@@ -63,25 +63,23 @@ const MainScene = ({ image, close, uri }: Props) => {
           save={save}
         />
       </div>
-      <div className="toolBarContainer">
-        <ToolPicker
-          tools={tools}
-          active={activeTool}
-          setActive={setActiveTool}
-        />
+
+      <div className={styles.mainArea}>
+        <div className={styles.canvasContainer} onWheel={handleWheel}>
+          {image && (
+            <LimpaCanvas
+              image={image}
+              scaleX={zoom * pixelAspectRatio}
+              scaleY={zoom}
+              grid={grid && zoom > 4}
+              tool={tools.current[activeTool]}
+            />
+          )}
+        </div>
+        <ToolPicker activeTool={activeTool} setActiveTool={setActiveTool} />
       </div>
-      <div className="canvasContainer" onWheel={handleWheel}>
-        {image && (
-          <LimpaCanvas
-            image={image}
-            scaleX={zoom * pixelAspectRatio}
-            scaleY={zoom}
-            grid={grid && zoom > 4}
-            tool={activeTool}
-          />
-        )}
-      </div>
-      <div className="colorPickerContainer">
+
+      <div className={styles.colorPickerContainer}>
         <ColorPicker
           palette={image.palette}
           active={activeColorIndex}

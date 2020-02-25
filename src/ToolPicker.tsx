@@ -1,32 +1,54 @@
 import React from 'react';
 import classNames from 'classnames/bind';
 
-import { Tool } from './tools';
+import { Tool, ToolType } from './tools';
 import styles from './ToolPicker.module.css';
 
 const cx = classNames.bind(styles);
 
 type Props = {
-  tools: Tool[];
-  active: Tool;
-  setActive: (tool: Tool) => void;
+  activeTool: ToolType;
+  setActiveTool: (type: ToolType) => void;
 };
 
-const ToolPicker = ({ tools, active, setActive }: Props) => {
+type IconButtonProps = {
+  name: string;
+  icon: string;
+  active: boolean;
+  onClick: any;
+};
+
+const IconButton = ({ name, icon, active, onClick }: IconButtonProps) => (
+  <div
+    className={cx('iconButton', { active })}
+    style={{ backgroundImage: icon }}
+    onClick={onClick}
+  />
+);
+
+const ToolPicker = ({ activeTool, setActiveTool }: Props) => {
   return (
     <div className={styles.toolPicker}>
-      {tools.map((tool, index) => (
-        <div
-          key={index}
-          className={cx({ active: active === tool })}
-          onClick={e => {
-            e.stopPropagation();
-            setActive(tool);
-          }}
-        >
-          {tool.name}
-        </div>
-      ))}
+      <IconButton
+        name="Pen"
+        icon="url(/img/pen-16.png)"
+        active={activeTool === ToolType.PEN}
+        onClick={() => setActiveTool(ToolType.PEN)}
+      />
+
+      <IconButton
+        name="Line"
+        icon="url(/img/line-16.png)"
+        active={activeTool === ToolType.LINE}
+        onClick={() => setActiveTool(ToolType.LINE)}
+      />
+
+      <IconButton
+        name="Rectangle"
+        icon="url(/img/rectangle-16.png)"
+        active={activeTool === ToolType.RECTANGLE}
+        onClick={() => setActiveTool(ToolType.RECTANGLE)}
+      />
     </div>
   );
 };

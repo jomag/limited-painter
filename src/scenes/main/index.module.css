@@ -1,0 +1,19 @@
+/* Main area containing the image canvas and tool picker */
+.mainArea {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: row;
+}
+
+.canvasContainer {
+  flex-grow: 1;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.colorPickerContainer {
+  flex-grow: 0;
+  border-top: 1px solid #444;
+  background: #333;
+  padding: 2px;
+}
