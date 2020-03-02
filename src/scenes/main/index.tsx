@@ -1,17 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
-import ToolBar from '../../ToolBar';
-import ColorPicker from '../../ColorPicker';
-import ToolPicker from '../../ToolPicker';
-import LimpaCanvas from '../../LimpaCanvas';
-import ImageProject from '../../Image';
-import { Tool } from '../../tools';
-import PenTool from '../../tools/PenTool';
-import LineTool from '../../tools/LineTool';
-import { saveImage } from '../../storage';
-import { RectangleTool } from '../../tools/RectangleTool';
-import styles from './index.module.css';
-import { ToolType } from '../../tools';
+import ToolBar from "../../ToolBar";
+import ColorPicker from "../../ColorPicker";
+import ToolPicker from "../../ToolPicker";
+import BrushPicker from "./components/BrushPicker";
+import LimpaCanvas from "../../LimpaCanvas";
+import ImageProject from "../../Image";
+import { Tool } from "../../tools";
+import PenTool from "../../tools/PenTool";
+import LineTool from "../../tools/LineTool";
+import { saveImage } from "../../storage";
+import { RectangleTool } from "../../tools/RectangleTool";
+import styles from "./index.module.css";
+import { ToolType } from "../../tools";
+import { Brush, BrushShape } from "../../brush";
 
 type Props = {
   image: ImageProject;
@@ -27,9 +29,11 @@ const MainScene = ({ image, close, uri }: Props) => {
   const tools = useRef<{ [type in ToolType]: Tool }>({
     [ToolType.PEN]: new PenTool(1),
     [ToolType.LINE]: new LineTool(),
-    [ToolType.RECTANGLE]: new RectangleTool(),
+    [ToolType.RECTANGLE]: new RectangleTool()
   });
   const [activeTool, setActiveTool] = useState<ToolType>(ToolType.PEN);
+  const [brushSize, setBrushSize] = useState<number>(3);
+  const [brushShape, setBrushShape] = useState<BrushShape>(BrushShape.ROUND);
 
   const setActiveColorIndex = (index: number) => {
     for (const tool of Object.values(tools)) {
@@ -73,10 +77,21 @@ const MainScene = ({ image, close, uri }: Props) => {
               scaleY={zoom}
               grid={grid && zoom > 4}
               tool={tools.current[activeTool]}
+              brush={{ shape: brushShape, size: brushSize }}
             />
           )}
         </div>
-        <ToolPicker activeTool={activeTool} setActiveTool={setActiveTool} />
+
+        <div>
+          <ToolPicker activeTool={activeTool} setActiveTool={setActiveTool} />
+          <BrushPicker
+            brush={{ shape: brushShape, size: brushSize }}
+            setBrush={(brush: Brush) => {
+              setBrushShape(brush.shape);
+              setBrushSize(brush.size);
+            }}
+          />
+        </div>
       </div>
 
       <div className={styles.colorPickerContainer}>

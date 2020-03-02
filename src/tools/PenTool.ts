@@ -1,7 +1,9 @@
-import ImageProject from '../Image';
-import { Tool } from './';
-import Layer from '../Layer';
-import { ToolType } from '.';
+import ImageProject from "../Image";
+import { Tool } from "./";
+import Layer from "../Layer";
+import { ToolType } from ".";
+import { ToolEvent } from ".";
+import { Brush, drawBrush } from "../brush";
 
 export class PenTool extends Tool {
   penSize: number;
@@ -13,56 +15,29 @@ export class PenTool extends Tool {
     this.state = false;
   }
 
-  handleMouseDown(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    toolLayer: Layer,
-  ) {
-    console.log('mouse down...');
+  handleMouseDown(evt: ToolEvent) {
     this.state = true;
-    this.draw(x, y, toolLayer);
+    this.draw(evt.x, evt.y, evt.preview, evt.brush);
   }
 
-  handleMouseUp(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    preview: Layer,
-  ) {
+  handleMouseUp(evt: ToolEvent) {
     if (this.state) {
-      this.apply(img, preview);
+      this.apply(evt.image, evt.preview);
       this.state = false;
     }
   }
 
-  handleMouseMove(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    preview: Layer,
-  ) {
+  handleMouseMove(evt: ToolEvent) {
     if (!this.state) {
       // FIXME: only needs to be done when moving from one pixel to another
-      preview.clear();
+      evt.preview.clear();
     }
 
-    this.draw(x, y, preview);
+    this.draw(evt.x, evt.y, evt.preview, evt.brush);
   }
 
-  draw(x: number, y: number, preview: Layer) {
-    const idx = this.foregroundColorIndex;
-    if (this.penSize === 2) {
-      preview.setPixel(x - 1, y - 1, idx);
-      preview.setPixel(x, y - 1, idx);
-      preview.setPixel(x - 1, y, idx);
-      preview.setPixel(x, y, idx);
-    } else {
-      preview.setPixel(x, y, idx);
-    }
+  draw(x: number, y: number, preview: Layer, brush: Brush) {
+    drawBrush(brush, preview, x, y, this.foregroundColorIndex);
   }
 }
 

@@ -1,7 +1,9 @@
-import ImageProject from '../Image';
-import { Tool } from './';
-import Layer from '../Layer';
-import { ToolType } from '.';
+import ImageProject from "../Image";
+import { Tool } from "./";
+import Layer from "../Layer";
+import { ToolType } from ".";
+import { ToolEvent } from ".";
+import { Brush, drawBrush } from "../brush";
 
 export class LineTool extends Tool {
   state: boolean;
@@ -9,49 +11,31 @@ export class LineTool extends Tool {
   startY: number;
 
   constructor() {
-    super(ToolType.LINE, 'Line');
+    super(ToolType.LINE, "Line");
     this.startX = 0;
     this.startY = 0;
     this.state = false;
   }
 
-  handleMouseDown(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    toolLayer: Layer,
-  ) {
+  handleMouseDown(evt: ToolEvent) {
     if (!this.state) {
-      this.startX = x;
-      this.startY = y;
+      this.startX = evt.x;
+      this.startY = evt.y;
       this.state = true;
-      this.draw(this.startX, this.startY, x, y, img, toolLayer);
+      this.draw(this.startX, this.startY, evt.x, evt.y, evt.brush, evt.preview);
     }
   }
 
-  handleMouseUp(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    preview: Layer,
-  ) {
+  handleMouseUp(evt: ToolEvent) {
     if (this.state) {
-      this.apply(img, preview);
+      this.apply(evt.image, evt.preview);
       this.state = false;
     }
   }
 
-  handleMouseMove(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    toolLayer: Layer,
-  ) {
+  handleMouseMove(evt: ToolEvent) {
     if (this.state) {
-      this.draw(this.startX, this.startY, x, y, img, toolLayer);
+      this.draw(this.startX, this.startY, evt.x, evt.y, evt.brush, evt.preview);
     }
   }
 
@@ -60,8 +44,8 @@ export class LineTool extends Tool {
     y1: number,
     x2: number,
     y2: number,
-    img: ImageProject,
-    toolLayer: Layer,
+    brush: Brush,
+    preview: Layer
   ) {
     const dx = x2 - x1;
     let dy = y2 - y1;
@@ -76,7 +60,8 @@ export class LineTool extends Tool {
     let y = y1;
 
     for (let x = x1; x <= x2; x++) {
-      toolLayer.setPixel(x, y, this.foregroundColorIndex);
+      drawBrush(brush, preview, x, y, this.foregroundColorIndex);
+
       if (D > 0) {
         y += yi;
         D = D - 2 * dx;
@@ -90,8 +75,8 @@ export class LineTool extends Tool {
     y1: number,
     x2: number,
     y2: number,
-    img: ImageProject,
-    toolLayer: Layer,
+    brush: Brush,
+    preview: Layer
   ) {
     let dx = x2 - x1;
     const dy = y2 - y1;
@@ -106,7 +91,8 @@ export class LineTool extends Tool {
     let x = x1;
 
     for (let y = y1; y <= y2; y++) {
-      toolLayer.setPixel(x, y, this.foregroundColorIndex);
+      drawBrush(brush, preview, x, y, this.foregroundColorIndex);
+
       if (D > 0) {
         x += xi;
         D = D - 2 * dy;
@@ -120,21 +106,21 @@ export class LineTool extends Tool {
     y1: number,
     x2: number,
     y2: number,
-    img: ImageProject,
-    toolLayer: Layer,
+    brush: Brush,
+    preview: Layer
   ) {
-    toolLayer.clear();
+    preview.clear();
     if (Math.abs(x2 - x1) > Math.abs(y2 - y1)) {
       if (x1 > x2) {
-        this.drawHorz(x2, y2, x1, y1, img, toolLayer);
+        this.drawHorz(x2, y2, x1, y1, brush, preview);
       } else {
-        this.drawHorz(x1, y1, x2, y2, img, toolLayer);
+        this.drawHorz(x1, y1, x2, y2, brush, preview);
       }
     } else {
       if (y1 > y2) {
-        this.drawVert(x2, y2, x1, y1, img, toolLayer);
+        this.drawVert(x2, y2, x1, y1, brush, preview);
       } else {
-        this.drawVert(x1, y1, x2, y2, img, toolLayer);
+        this.drawVert(x1, y1, x2, y2, brush, preview);
       }
     }
   }

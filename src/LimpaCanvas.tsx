@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
-import ImageProject, { AbsRect } from './Image';
-import { Tool } from './tools';
-import Layer from './Layer';
+import React, { Component } from "react";
+import ImageProject, { AbsRect } from "./Image";
+import { Tool, ToolEvent } from "./tools";
+import { Brush } from "./brush";
+import Layer from "./Layer";
 
 export type Color = [number, number, number, number];
 
@@ -14,6 +15,7 @@ type LimpaCanvasProps = {
   scaleY: number;
   grid: boolean;
   tool: Tool;
+  brush: Brush;
 };
 
 class LimpaCanvas extends Component<LimpaCanvasProps> {
@@ -37,8 +39,8 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
     this.toolLayer = new Layer(props.image.width, props.image.height);
 
     // FIXME: need improvements after introducing layers
-    this.image.layers[0].on('dirty', this.handleDirty);
-    this.toolLayer.on('dirty', this.handleDirty);
+    this.image.layers[0].on("dirty", this.handleDirty);
+    this.toolLayer.on("dirty", this.handleDirty);
   }
 
   componentDidMount() {
@@ -47,73 +49,76 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
         x1: 0,
         y1: 0,
         x2: this.image.width - 1,
-        y2: this.image.height - 1,
+        y2: this.image.height - 1
       });
     }
   }
 
   componentDidUpdate(prevProps: LimpaCanvasProps) {
     if (prevProps.image !== this.image) {
-      this.image?.off('dirty', this.handleDirty);
+      this.image?.off("dirty", this.handleDirty);
       this.image = this.props.image;
-      this.image.on('dirty', this.handleDirty);
+      this.image.on("dirty", this.handleDirty);
     }
 
     this.renderDirty({
       x1: 0,
       y1: 0,
       x2: this.image.width - 1,
-      y2: this.image.height - 1,
+      y2: this.image.height - 1
     });
   }
 
   componentWillUnmount() {
-    this.image?.off('dirty', this.handleDirty);
+    this.image?.off("dirty", this.handleDirty);
   }
 
   getEventPixel(evt: React.MouseEvent) {
     return [
       Math.floor(evt.nativeEvent.offsetX / this.props.scaleX),
-      Math.floor(evt.nativeEvent.offsetY / this.props.scaleY),
+      Math.floor(evt.nativeEvent.offsetY / this.props.scaleY)
     ];
   }
 
   handleMouseDown(evt: React.MouseEvent) {
     if (this.image) {
       const px = this.getEventPixel(evt);
-      this.props.tool?.handleMouseDown(
-        evt,
-        px[0],
-        px[1],
-        this.image,
-        this.toolLayer,
-      );
+      this.props.tool?.handleMouseDown({
+        x: px[0],
+        y: px[1],
+        image: this.image,
+        preview: this.toolLayer,
+        brush: this.props.brush,
+        evt
+      });
     }
   }
 
   handleMouseUp(evt: React.MouseEvent) {
     if (this.image) {
       const px = this.getEventPixel(evt);
-      this.props.tool?.handleMouseUp(
-        evt,
-        px[0],
-        px[1],
-        this.image,
-        this.toolLayer,
-      );
+      this.props.tool?.handleMouseUp({
+        x: px[0],
+        y: px[1],
+        image: this.image,
+        preview: this.toolLayer,
+        brush: this.props.brush,
+        evt
+      });
     }
   }
 
   handleMouseMove(evt: React.MouseEvent) {
     if (this.image) {
       const px = this.getEventPixel(evt);
-      this.props.tool?.handleMouseMove(
-        evt,
-        px[0],
-        px[1],
-        this.image,
-        this.toolLayer,
-      );
+      this.props.tool?.handleMouseMove({
+        x: px[0],
+        y: px[1],
+        image: this.image,
+        preview: this.toolLayer,
+        brush: this.props.brush,
+        evt
+      });
     }
   }
 
@@ -131,7 +136,7 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
       [0, -1],
       [-1, 0],
       [1, 0],
-      [0, 1],
+      [0, 1]
     ];
 
     for (const px of brush) {
@@ -156,7 +161,7 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
 
     const el = (this.sourceRef.current as unknown) as HTMLCanvasElement;
 
-    const ctx = el.getContext('2d');
+    const ctx = el.getContext("2d");
 
     if (!ctx) {
       return;
@@ -184,7 +189,7 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
     ctx.putImageData(imageData, dirtyX, dirtyY);
 
     const el2 = (this.canvasRef.current as unknown) as HTMLCanvasElement;
-    const ctx2 = el2.getContext('2d');
+    const ctx2 = el2.getContext("2d");
 
     if (!ctx2) {
       return;
@@ -223,10 +228,10 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
     ctx.lineWidth = 1;
     ctx.setLineDash([1, 1]);
     ctx.lineDashOffset = 0;
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = "#000000";
     ctx.stroke();
     ctx.lineDashOffset = 1;
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = "#ffffff";
     ctx.stroke();
   }
 
@@ -240,13 +245,13 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
           ref={this.sourceRef}
           width={width}
           height={height}
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         ></canvas>
         <canvas
           ref={this.canvasRef}
           width={width * scaleX}
           height={height * scaleY}
-          style={{ border: '1px solid white' }}
+          style={{ border: "1px solid white" }}
           onMouseDownCapture={this.handleMouseDown}
           onMouseUpCapture={this.handleMouseUp}
           onMouseMove={this.handleMouseMove}
