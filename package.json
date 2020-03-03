@@ -19,7 +19,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "npm run build:assets; react-scripts build",
+    "build:assets": "ts-node -O '{\"module\": \"commonjs\"}' gen-assets.ts",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -40,6 +41,8 @@
   },
   "devDependencies": {
     "@types/classnames": "^2.2.9",
-    "pngjs": "^3.4.0"
+    "@types/pngjs": "^3.4.1",
+    "pngjs": "^3.4.0",
+    "ts-node": "^8.6.2"
   }
 }
