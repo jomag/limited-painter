@@ -1,8 +1,8 @@
-import Layer from "./Layer";
+import IPixelBuffer from './IPixelBuffer';
 
 export enum BrushShape {
   ROUND,
-  SQUARE
+  SQUARE,
 }
 
 export type Brush = {
@@ -12,35 +12,35 @@ export type Brush = {
 
 export const drawBrush = (
   brush: Brush,
-  layer: Layer,
+  buffer: IPixelBuffer,
   x: number,
   y: number,
-  color: number
+  color: number,
 ) => {
   switch (brush.size) {
     case 0:
     case 1:
-      layer.setPixel(x, y, color);
+      buffer.setPixel(x, y, color);
       break;
 
     case 2:
-      layer.setPixel(x - 1, y - 1, color);
-      layer.setPixel(x, y - 1, color);
-      layer.setPixel(x, y, color);
-      layer.setPixel(x - 1, y, color);
+      buffer.setPixel(x - 1, y - 1, color);
+      buffer.setPixel(x, y - 1, color);
+      buffer.setPixel(x, y, color);
+      buffer.setPixel(x - 1, y, color);
       break;
 
     case 3:
       if (brush.shape === BrushShape.ROUND) {
-        layer.setPixel(x - 1, y, color);
-        layer.setPixel(x + 1, y, color);
-        layer.setPixel(x, y - 1, color);
-        layer.setPixel(x, y + 1, color);
-        layer.setPixel(x, y, color);
+        buffer.setPixel(x - 1, y, color);
+        buffer.setPixel(x + 1, y, color);
+        buffer.setPixel(x, y - 1, color);
+        buffer.setPixel(x, y + 1, color);
+        buffer.setPixel(x, y, color);
       } else {
         for (let nx = x - 1; nx <= x + 1; nx++) {
           for (let ny = y - 1; ny <= y + 1; ny++) {
-            layer.setPixel(nx, ny, color);
+            buffer.setPixel(nx, ny, color);
           }
         }
       }
