@@ -4,6 +4,7 @@ import { Brush, BrushShape, drawBrush } from './src/brush';
 import IPixelBuffer from './src/IPixelBuffer';
 
 const brushesDir = './public/img/brushes';
+const scale = 2;
 
 if (!fs.existsSync(brushesDir)) {
   fs.mkdirSync(brushesDir);
@@ -25,17 +26,21 @@ for (const name of Object.keys(brushes)) {
 
   const png = new PNG({
     colorType: 4,
-    width,
-    height,
+    width: width * scale,
+    height: height * scale,
   });
 
   const buf: IPixelBuffer = {
     setPixel: (x: number, y: number, color: number) => {
-      const n = (y * width + x) * 4;
-      png.data[n] = 255;
-      png.data[n + 1] = 255;
-      png.data[n + 2] = 255;
-      png.data[n + 3] = 255;
+      for (let sy = y * scale; sy < (y + 1) * scale; sy++) {
+        for (let sx = x * scale; sx < (x + 1) * scale; sx++) {
+          const n = (sy * width * scale + sx) * 4;
+          png.data[n] = 255;
+          png.data[n + 1] = 255;
+          png.data[n + 2] = 255;
+          png.data[n + 3] = 255;
+        }
+      }
     },
     getPixel: (x: number, y: number) => undefined,
   };
