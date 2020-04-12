@@ -1,0 +1,13 @@
+.brushPicker {
+  display: flex;
+}
+
+.brush {
+  background: #f00;
+  width: 16px;
+  height: 16px;
+}
+
+.active {
+  background: #fff;
+}

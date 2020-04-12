@@ -114,6 +114,12 @@ class Layer extends EventEmitter {
     }
   }
 
+  getPixel(x: number, y: number) {
+    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
+      return this.pixels[y * this.width + x];
+    }
+  }
+
   copyFrom(source: Layer, rect: AbsRect, offsetX: number, offsetY: number) {
     let oy = offsetY;
     for (let y = rect.y1; y <= rect.y2; y++) {

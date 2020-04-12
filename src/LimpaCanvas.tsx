@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ImageProject, { AbsRect } from './Image';
-import { Tool } from './tools';
+import { Tool, ToolEvent } from './tools';
+import { Brush } from './brush';
 import Layer from './Layer';
 
 export type Color = [number, number, number, number];
@@ -14,6 +15,7 @@ type LimpaCanvasProps = {
   scaleY: number;
   grid: boolean;
   tool: Tool;
+  brush: Brush;
 };
 
 class LimpaCanvas extends Component<LimpaCanvasProps> {
@@ -81,39 +83,42 @@ class LimpaCanvas extends Component<LimpaCanvasProps> {
   handleMouseDown(evt: React.MouseEvent) {
     if (this.image) {
       const px = this.getEventPixel(evt);
-      this.props.tool?.handleMouseDown(
+      this.props.tool?.handleMouseDown({
+        x: px[0],
+        y: px[1],
+        image: this.image,
+        preview: this.toolLayer,
+        brush: this.props.brush,
         evt,
-        px[0],
-        px[1],
-        this.image,
-        this.toolLayer,
-      );
+      });
     }
   }
 
   handleMouseUp(evt: React.MouseEvent) {
     if (this.image) {
       const px = this.getEventPixel(evt);
-      this.props.tool?.handleMouseUp(
+      this.props.tool?.handleMouseUp({
+        x: px[0],
+        y: px[1],
+        image: this.image,
+        preview: this.toolLayer,
+        brush: this.props.brush,
         evt,
-        px[0],
-        px[1],
-        this.image,
-        this.toolLayer,
-      );
+      });
     }
   }
 
   handleMouseMove(evt: React.MouseEvent) {
     if (this.image) {
       const px = this.getEventPixel(evt);
-      this.props.tool?.handleMouseMove(
+      this.props.tool?.handleMouseMove({
+        x: px[0],
+        y: px[1],
+        image: this.image,
+        preview: this.toolLayer,
+        brush: this.props.brush,
         evt,
-        px[0],
-        px[1],
-        this.image,
-        this.toolLayer,
-      );
+      });
     }
   }
 

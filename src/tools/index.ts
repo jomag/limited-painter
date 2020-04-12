@@ -1,11 +1,22 @@
-import ImageProject from '../Image';
-import Layer from '../Layer';
+import ImageProject from "../Image";
+import Layer from "../Layer";
+import { Brush } from "../brush";
 
 export enum ToolType {
   PEN,
   LINE,
-  RECTANGLE,
+  RECTANGLE
 }
+
+export type ToolEvent = {
+  x: number;
+  y: number;
+
+  image: ImageProject;
+  preview: Layer;
+  brush: Brush;
+  evt: any;
+};
 
 export class Tool {
   name: string;
@@ -22,34 +33,16 @@ export class Tool {
     this.foregroundColorIndex = index;
   }
 
-  handleMouseDown(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    toolLayer: Layer,
-  ) {
-    console.log('mouse down...');
+  handleMouseDown(evt: ToolEvent) {
+    console.log("mouse down...");
   }
 
-  handleMouseUp(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    toolLayer: Layer,
-  ) {
-    console.log('mouse up...');
+  handleMouseUp(evt: ToolEvent) {
+    console.log("mouse up...");
   }
 
-  handleMouseMove(
-    evt: React.MouseEvent,
-    x: number,
-    y: number,
-    img: ImageProject,
-    toolLayer: Layer,
-  ) {
-    console.log('mouse move...');
+  handleMouseMove(evt: ToolEvent) {
+    console.log("mouse move...");
   }
 
   apply(img: ImageProject, preview: Layer) {
@@ -58,7 +51,7 @@ export class Tool {
         preview,
         preview.usedRect,
         preview.usedRect.x1,
-        preview.usedRect.y1,
+        preview.usedRect.y1
       );
       preview.clear();
     }
